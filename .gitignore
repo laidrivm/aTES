@@ -128,3 +128,9 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# manually added
+.DS_Store
+**/.DS_Store
+**/node_modules/
+**/data/

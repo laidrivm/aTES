@@ -1,8 +1,24 @@
 version: '3'
 services:
   auth:
+    restart: always
     build:
       context: ./auth
       dockerfile: Dockerfile
+    depends_on:
+      - auth_mongo
+    networks:
+      - auth_network
     ports:
       - 3001:3001
+  auth_mongo:
+    restart: always
+    image: mongo:4.2.0
+    volumes:
+      - ./auth/data:/data/db
+    networks:
+      - auth_network
+    expose:
+      - 27017
+networks:
+  auth_network:

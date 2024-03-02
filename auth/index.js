@@ -33,5 +33,3 @@ const server = http.createServer(server_config, app);
 server.listen(port, (err) => {
 	console.log(`Node.js Express Server running on ${port}/`);
 });
-
-

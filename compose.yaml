@@ -6,8 +6,6 @@ services:
       dockerfile: Dockerfile
     depends_on:
       - mongo_auth
-    networks:
-      - auth_network
     ports:
       - 3001:3001
 
@@ -16,10 +14,10 @@ services:
     image: mongo:4.2.0
     volumes:
       - ./mongo/auth/data:/data/db
-    networks:
-      - auth_network
     expose:
       - 27017
+    ports:
+      - 27017:27017
 
   tasks:
     restart: always
@@ -27,9 +25,7 @@ services:
       context: ./tasks
       dockerfile: Dockerfile
     depends_on:
-      - mongo_auth
-    networks:
-      - tasks_network
+      - mongo_tasks
     ports:
       - 3002:3002
 
@@ -38,10 +34,10 @@ services:
     image: mongo:4.2.0
     volumes:
       - ./mongo/tasks/data:/data/db
-    networks:
-      - tasks_network
     expose:
-      - 27017
+      - 27018
+    ports:
+      - 27018:27018
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
@@ -52,9 +48,6 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
-    networks:
-      - tasks_network
-      - auth_network
 
   broker:
     image: confluentinc/cp-server:7.5.0
@@ -78,10 +71,3 @@ services:
       CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
       CONFLUENT_METRICS_ENABLE: 'true'
       CONFLUENT_SUPPORT_CUSTOMER_ID: 'anonymous'
-    networks:
-      - tasks_network
-      - auth_network
-
-networks:
-  auth_network:
-  tasks_network:

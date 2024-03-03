@@ -50,11 +50,25 @@ const routes = (app) => {
     }
   });
 
-  router.post("/authorize", (req, res) => {
+  router.post("/verify", async (req, res) => {
+    try {
+        // Extract the token from the request headers
+        //const token = req.headers.authorization;
 
+        const { token } = req.body;
+
+        // Decode the token to verify
+        const decoded = jwt.verify(token, process.env.SECRET);
+
+        // Send the decoded token to the client
+        res.json(decoded);
+    } catch (error) {
+        console.error("Error verifying token:", error);
+        res.status(401).json({ error: "Unauthorized" });
+    }
   });
 
-  router.post("/verify", (req, res) => {
+  router.post("/authorize", (req, res) => {
 
   });
 

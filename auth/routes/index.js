@@ -10,10 +10,9 @@ const routes = (app) => {
   router.get("/", async (req, res) => {
     try {
         // Retrieve all records from the clients collection
-        const userss = await User.find({}, { _id: 1, client_id: 1, client_secret: 1 });
+        const users = await User.find({}, { _id: 1, client_id: 1, client_secret: 1 });
         
-        // res.json(users);
-        res.send(users);
+        res.json(users);
     } catch (error) {
         // Handle errors
         console.error("Error retrieving tokens:", error);

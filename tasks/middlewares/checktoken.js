@@ -48,7 +48,6 @@ async function checkToken(req, res, next) {
         // If token exists, verify it
         if (req.cookies?.token) {
             const token = req.cookies.token;
-            console.log(`Found a token: ${token}`);
             const response = await fetch(`${process.env.AUTH_URI}/verify`, {
                 method: 'POST',
                 headers: {
@@ -61,9 +60,9 @@ async function checkToken(req, res, next) {
             }
 
             // If token is valid, set user object in request and proceed
-            const userData = response.json();
-            console.log(`Validated user data: ${userData}`);
+            const userData = await response.json();
             req.user = userData;
+            //next(req, res);
             next();
         } else {
             // If token doesn't exist, respond with bare HTML form

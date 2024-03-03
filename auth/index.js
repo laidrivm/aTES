@@ -14,6 +14,7 @@ app.use(cors());
 //app.use(express.static(__dirname + '/static'));
 
 db.connect(app);
+db.connectKafka(app);
 
 //const fs = require("fs");
 //const privateKey = fs.readFileSync( 'private.key' );

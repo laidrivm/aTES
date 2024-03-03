@@ -32,7 +32,7 @@ const routes = (app) => {
         // If no user found, create a new one
         if (!user) {
             // Create a new user
-            user = new User({ user_id, user_secret, role: "doer", account_id: "" });
+            user = new User({ user_id, user_secret, role: "doer" });
 
             // Save the user to the database
             await user.save();

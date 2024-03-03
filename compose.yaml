@@ -38,6 +38,7 @@ services:
       - 27018
     ports:
       - 27018:27018
+    command: mongod --port 27018
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0

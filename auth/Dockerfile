@@ -16,7 +16,6 @@ ENV PORT 3001
 ENV MONGODB_URI mongodb://mongo_auth:27017/auth
 ENV SECRET TOPSECRET
 
-
 WORKDIR /usr/src/app
 
 # Download dependencies as a separate step to take advantage of Docker's caching.

@@ -14,7 +14,7 @@ app.use(cors());
 //app.use(express.static(__dirname + '/static'));
 
 db.connect(app);
-db.connectKafka(app);
+const { producer, consumer } = db.connectKafka(app);
 
 //const fs = require("fs");
 //const privateKey = fs.readFileSync( 'private.key' );
@@ -25,7 +25,7 @@ const server_config = {
 	//cert: certificate
 };
 
-require("./routes")(app);
+require("./routes")(app, producer, consumer);
 
 app.on("ready", () => {
 	const server = http.createServer(server_config, app);

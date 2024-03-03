@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { Kafka } = require('kafkajs');
 
 exports.connect = (app) => {
   const options = {
@@ -21,4 +22,45 @@ exports.connect = (app) => {
       });
   };
   connectWithRetry();
+};
+
+exports.connectKafka = (app) => {
+  const kafka = new Kafka({
+    clientId: 'tasks',
+    brokers: ['broker:9092'], // Use 'broker' as the hostname
+    retry: {
+      initialRetryTime: 1000, // Adjust the initial retry time if needed
+      retries: 10, // Adjust the maximum number of retries if needed
+    },
+  });
+
+  const producer = kafka.producer();
+  const consumer = kafka.consumer({ groupId: 'tasks-group' });
+
+  const connectWithRetry = async () => {
+    try {
+      await producer.connect();
+      await consumer.connect();
+      console.log('Auth service connected to Kafka');
+
+      // Subscribe to topics, run consumers, etc.
+      await consumer.subscribe({ topic: 'auth-topic' });
+
+      await consumer.run({
+        eachMessage: async ({ topic, partition, message }) => {
+          console.log({
+            value: message.value.toString(),
+          });
+        },
+      });
+    } catch (error) {
+      console.error('Error connecting to Kafka:', error);
+      console.log('Retrying in 2 seconds...');
+      setTimeout(connectWithRetry, 2000);
+    }
+  };
+
+  connectWithRetry();
+
+  return { producer, consumer };
 };

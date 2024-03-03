@@ -61,4 +61,6 @@ exports.connectKafka = (app) => {
   };
 
   connectWithRetry();
+
+  return { producer, consumer };
 };

@@ -3,8 +3,9 @@ const express = require("express");
 //const messages = require("../config/messages");
 const User = require("../db/user");
 const jwt = require('jsonwebtoken');
+const { Kafka } = require('kafkajs');
 
-const routes = (app) => {
+const routes = (app, producer, consumer) => {
   const router = express.Router();
 
   router.get("/", async (req, res) => {
@@ -40,6 +41,17 @@ const routes = (app) => {
         // Create a JWT token
         const jwtPayload = { user_id: user.user_id, role: user.role };
         const jwtToken = jwt.sign(jwtPayload, process.env.SECRET);
+
+        await producer.send({
+          topic: 'auth-topic',
+          messages: [{
+            key: 'user_authenticated', // Set a key for the message
+            value: JSON.stringify({ // Provide a value for the message
+              type: 'user_authenticated',
+              user_id: user.user_id
+            })
+          }]
+        });
 
         res.json({ token: jwtToken });
     } catch (error) {

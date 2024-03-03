@@ -26,24 +26,23 @@ const routes = (app) => {
         const { user_id, user_secret } = req.body;
         // TODO ADD HASH HERE
 
-        // Check if a token already exists for the given user_id and user_secret
+        // Check if this user already exists for the given user_id and user_secret
         let user = await User.findOne({ user_id, user_secret });
 
-        // If no token found, create a new one
+        // If no user found, create a new one
         if (!user) {
-            // Create a new token
-            user = new User({ user_id, user_secret });
+            // Create a new user
+            user = new User({ user_id, user_secret, role: "doer", account_id: "" });
 
-            // Save the token to the database
+            // Save the user to the database
             await user.save();
         }
 
         // Create a JWT token
-        const jwtPayload = { user_id: token.user_id };
+        const jwtPayload = { user_id: user.user_id, role: user.role };
         const jwtToken = jwt.sign(jwtPayload, process.env.SECRET);
 
-        //res.json({ token: jwtToken });
-        res.send(jwtToken);
+        res.json({ token: jwtToken });
     } catch (error) {
         console.error("Error authenticating user:", error);
         res.status(500).json({ error: "Internal Server Error" });
@@ -74,29 +73,5 @@ const routes = (app) => {
 
   app.use("/", router);
 };
+
 module.exports = routes;
-
-  /*router.post("/todos", (req, res) => {
-    const todo = new Todo({
-      text: req.body.text,
-    });
-
-    todo
-      .save()
-      .then((result) => {
-        serverResponse.sendSuccess(res, messages.SUCCESSFUL, result);
-      })
-      .catch((e) => {
-        serverResponses.sendError(res, messages.BAD_REQUEST, e);
-      });
-  });
-
-  router.get("/", (req, res) => {
-    Todo.find({}, { __v: 0 })
-      .then((todos) => {
-        serverResponse.sendSuccess(res, messages.SUCCESSFUL, todos);
-      })
-      .catch((e) => {
-        serverResponse.sendError(res, messages.BAD_REQUEST, e);
-      });
-  });*/

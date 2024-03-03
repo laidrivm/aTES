@@ -30,7 +30,7 @@ app.on("ready", () => {
 		if (err)
 			console.log(err);
 		else
-			console.log(`Node.js Express Server is on port ${process.env.PORT}`);
+			console.log(`Auth service is on port ${process.env.PORT}`);
 	});
 });
 

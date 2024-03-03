@@ -1,7 +1,7 @@
 const express = require("express");
 //const serverResponse = require("./responses");
 //const messages = require("../config/messages");
-const Token = require("../db/token");
+const User = require("../db/user");
 const jwt = require('jsonwebtoken');
 
 const routes = (app) => {
@@ -10,10 +10,10 @@ const routes = (app) => {
   router.get("/", async (req, res) => {
     try {
         // Retrieve all records from the clients collection
-        const tokens = await Token.find({}, { _id: 1, client_id: 1, client_secret: 1 });
+        const userss = await User.find({}, { _id: 1, client_id: 1, client_secret: 1 });
         
-        // res.json(tokens);
-        res.send(tokens);
+        // res.json(users);
+        res.send(users);
     } catch (error) {
         // Handle errors
         console.error("Error retrieving tokens:", error);
@@ -23,29 +23,29 @@ const routes = (app) => {
 
   router.post("/authenticate", async (req, res) => {
     try {
-        const { client_id, client_secret } = req.body;
+        const { user_id, user_secret } = req.body;
         // TODO ADD HASH HERE
 
-        // Check if a token already exists for the given client_id and client_secret
-        let token = await Token.findOne({ client_id, client_secret });
+        // Check if a token already exists for the given user_id and user_secret
+        let user = await User.findOne({ user_id, user_secret });
 
         // If no token found, create a new one
-        if (!token) {
+        if (!user) {
             // Create a new token
-            token = new Token({ client_id, client_secret });
+            user = new User({ user_id, user_secret });
 
             // Save the token to the database
-            await token.save();
+            await user.save();
         }
 
         // Create a JWT token
-        const jwtPayload = { client_id: token.client_id };
+        const jwtPayload = { user_id: token.user_id };
         const jwtToken = jwt.sign(jwtPayload, process.env.SECRET);
 
         //res.json({ token: jwtToken });
         res.send(jwtToken);
     } catch (error) {
-        console.error("Error authenticating client:", error);
+        console.error("Error authenticating user:", error);
         res.status(500).json({ error: "Internal Server Error" });
     }
   });

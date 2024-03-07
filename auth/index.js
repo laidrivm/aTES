@@ -20,11 +20,6 @@ const { producer, consumer } = db.connectKafka(app);
 //const privateKey = fs.readFileSync( 'private.key' );
 //const certificate = fs.readFileSync( 'SSL.crt' );
 
-const server_config = {
-	//key : privateKey,
-	//cert: certificate
-};
-
 require("./routes")(app, producer, consumer);
 
 app.on("ready", () => {

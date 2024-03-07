@@ -11,8 +11,11 @@ ARG NODE_VERSION=21.6.2
 FROM node:${NODE_VERSION}-alpine
 
 # Use production node environment by default.
-ENV NODE_ENV production
-
+ENV NODE_ENV development
+ENV PORT 3001
+ENV MONGODB_URI mongodb://mongo_auth:27017/auth
+ENV SECRET TOPSECRET
+ENV KAFKA_URI broker:9092
 
 WORKDIR /usr/src/app
 

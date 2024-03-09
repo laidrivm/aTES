@@ -17,8 +17,8 @@ const { consumer } = db.connectKafka(app);
 
 const server_config = {};
 
-//require("./routes")(app, producer);
-//require("./db/consume")(consumer);
+require("./routes")(app);
+require("./db/consume")(consumer);
 
 app.on("ready", () => {
   const server = http.createServer(server_config, app);

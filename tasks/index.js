@@ -11,21 +11,14 @@ const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
-//app.use(express.static(__dirname + '/static'));
 
 db.connect(app);
 const { producer, consumer } = db.connectKafka(app);
 
-//const fs = require("fs");
-//const privateKey = fs.readFileSync( 'private.key' );
-//const certificate = fs.readFileSync( 'SSL.crt' );
+const server_config = {};
 
-const server_config = {
-  //key : privateKey,
-  //cert: certificate
-};
-
-require("./routes")(app, producer, consumer);
+require("./routes")(app, producer);
+require("./db/consume")(consumer);
 
 app.on("ready", () => {
   const server = http.createServer(server_config, app);

@@ -35,21 +35,22 @@ const routes = (app, producer) => {
 
             await user.save();
 
-            // Maybe should JSON.stringify() values
             await producer.send({
               topic: 'user.cud',
               messages: [{
-                properties: {
-                  event_id: '',
-                  event_version: 1,
-                  event_name: 'user.created',
-                  event_time: '',
-                  producer: 'auth'
-                },
-                data: {
-                  user_id: user.user_id,
-                  user_role: user.user_role
-                }
+                key: 'user.created',
+                value: JSON.stringify({
+                  properties: {
+                    event_id: '',
+                    event_version: 1,
+                    event_time: '',
+                    producer: 'auth'
+                  },
+                  data: {
+                    user_id: user.user_id,
+                    user_role: user.role
+                  }
+                })
               }]
             });
         }

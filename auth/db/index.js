@@ -35,24 +35,11 @@ exports.connectKafka = (app) => {
   });
 
   const producer = kafka.producer();
-  //const consumer = kafka.consumer({ groupId: 'auth-group' });
 
   const connectWithRetry = async () => {
     try {
       await producer.connect();
-      //await consumer.connect();
       console.log('Auth service connected to Kafka');
-
-      // Subscribe to topics, run consumers, etc.
-      //await consumer.subscribe({ topic: 'auth-topic' });
-
-      //await consumer.run({
-      //  eachMessage: async ({ topic, partition, message }) => {
-      //    console.log({
-      //      value: message.value.toString(),
-      //    });
-      //  },
-      //});
     } catch (error) {
       console.error('Error connecting to Kafka:', error);
       console.log('Retrying in 2 seconds...');

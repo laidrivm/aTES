@@ -40,7 +40,7 @@ const taskScreen = `
 <\/form>
 `
 
-const routes = (app) => {
+const routes = (app, producer) => {
   const router = express.Router();
 
   router.use(checkToken);
@@ -57,16 +57,34 @@ const routes = (app) => {
   router.post("/task", async (req, res) => {
     try {
       const { description } = req.body;
-      const assignedPrice = Math.floor(Math.random() * (20 - 10 + 1) + 10);
-      const completedPrice = Math.floor(Math.random() * (40 - 20 + 1) + 20);
+      //const assignedPrice = Math.floor(Math.random() * (20 - 10 + 1) + 10);
+      //const completedPrice = Math.floor(Math.random() * (40 - 20 + 1) + 20);
       const task = new Task({
         description,
         status: "assigned",
-        assignee: req.user.user_id,
-        assigned_price: assignedPrice,
-        completed_price: completedPrice
+        assignee: req.user.user_id
       });
       await task.save();
+
+      await producer.send({
+        topic: 'task.cud',
+        messages: [{
+          key: 'task.created',
+          value: JSON.stringify({
+            properties: {
+              event_id: '',
+              event_version: 1,
+              event_time: '',
+              producer: 'tasks'
+            },
+            data: {
+              task_description: task.description,
+              task_assignee: task.assignee
+            }
+          })
+        }]
+      });
+
       res.redirect('/');
     } catch (error) {
       console.error("Error creating task:", error);

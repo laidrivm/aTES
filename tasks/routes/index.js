@@ -63,12 +63,15 @@ const routes = (app, producer) => {
   router.post("/task", async (req, res) => {
     try {
       const { description } = req.body;
-      //const assignedPrice = Math.floor(Math.random() * (20 - 10 + 1) + 10);
-      //const completedPrice = Math.floor(Math.random() * (40 - 20 + 1) + 20);
+      const assignedPrice = Math.floor(Math.random() * (20 - 10 + 1) + 10);
+      const completedPrice = Math.floor(Math.random() * (40 - 20 + 1) + 20);
+      const users = await User.find({ role: 'doer' });
+      const randomIndex = Math.floor(Math.random() * users.length);
+      const randomAssignee = users[randomIndex];
       const task = new Task({
         description,
         status: "assigned",
-        assignee: req.user.user_id
+        assignee: randomAssignee.user_id
       });
       await task.save();
 

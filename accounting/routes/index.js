@@ -1,6 +1,7 @@
 const express = require("express");
 const Task = require("../db/task");
 const User = require("../db/user");
+const Transaction = require("../db/transaction");
 
 const routes = (app, producer) => {
   const router = express.Router();
@@ -15,6 +16,10 @@ const routes = (app, producer) => {
     res.json(tasks);
   });
 
+  router.get("/transactions", async (req, res) => {
+    const transactions = await Transaction.find({});
+    res.json(transactions);
+  });
 
   app.use("/", router);
 };

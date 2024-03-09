@@ -1,6 +1,7 @@
 const express = require("express");
 const User = require("../db/user");
 const Task = require("../db/task");
+const Transaction = require("../db/transaction");
 
 const consume = (consumer) => {
   consumer.subscribe({ topic: 'user.cud' });
@@ -24,6 +25,7 @@ const consume = (consumer) => {
             balance: 0
           });
           await user.save();
+
           break;
         case 'user.updated':
           break;
@@ -36,6 +38,21 @@ const consume = (consumer) => {
             completed_price: value.data.completed_price
           });
           await task.save();
+
+          const transaction = new Transaction({
+            account_id: value.data.task_assignee,
+            task_id: value.data.task_id,
+            type: 'credit',
+            amount: value.data.assigned_price
+          });
+          await transaction.save();
+
+          await User.findOneAndUpdate(
+            { user_id: value.data.task_assignee },
+            { $inc: { balance: -value.data.assigned_price } },
+            { new: true }
+          );
+
           break;
         case 'task.closed':
           break;

@@ -1,9 +1,10 @@
 const express = require("express");
 const User = require("../db/user");
+const Task = require("../db/task");
 
 const consume = (consumer) => {
   consumer.subscribe({ topic: 'user.cud' });
-  //consumer.subscribe({ topic: 'task.cud' })
+  consumer.subscribe({ topic: 'task.cud' })
 
   consumer.run({
     eachMessage: async ({ topic, partition, message }) => {
@@ -27,6 +28,14 @@ const consume = (consumer) => {
         case 'user.updated':
           break;
         case 'task.created':
+          const task = new Task({
+            task_id: value.data.task_id,
+            description: value.data.task_description,
+            assignee: value.data.task_assignee,
+            assigned_price: value.data.assigned_price,
+            completed_price: value.data.completed_price
+          });
+          await task.save();
           break;
         case 'task.closed':
           break;
@@ -38,3 +47,4 @@ const consume = (consumer) => {
 }
 
 module.exports = consume;
+              

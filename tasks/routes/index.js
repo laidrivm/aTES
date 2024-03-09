@@ -2,6 +2,7 @@ const express = require("express");
 const Task = require("../db/task");
 const User = require("../db/user");
 const checkToken = require('../middlewares/checktoken');
+const crypto = require('node:crypto');
 
 const taskScreen = `
 <script>
@@ -68,10 +69,14 @@ const routes = (app, producer) => {
       const users = await User.find({ role: 'doer' });
       const randomIndex = Math.floor(Math.random() * users.length);
       const randomAssignee = users[randomIndex];
+      const externalId = crypto.randomUUID();
       const task = new Task({
         description,
         status: "assigned",
-        assignee: randomAssignee.user_id
+        assignee: randomAssignee.user_id,
+        assigned_price: assignedPrice,
+        completed_price: completedPrice,
+        external_id: externalId
       });
       await task.save();
 
@@ -88,7 +93,10 @@ const routes = (app, producer) => {
             },
             data: {
               task_description: task.description,
-              task_assignee: task.assignee
+              task_assignee: task.assignee,
+              assigned_price: task.assigned_price,
+              completed_price: task.completed_price,
+              task_id: task.external_id
             }
           })
         }]

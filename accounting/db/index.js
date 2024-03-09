@@ -9,15 +9,15 @@ exports.connect = (app) => {
 
   const connectWithRetry = () => {
     mongoose.Promise = global.Promise;
-    console.log(`Tasks service is trying to connect with retry to MongoDB ${process.env.MONGODB_URI}`);
+    console.log(`Accounting service is trying to connect with retry to MongoDB ${process.env.MONGODB_URI}`);
     mongoose
       .connect(process.env.MONGODB_URI, options)
       .then(() => {
-        console.log(`Tasks service is connected to MongoDB`);
+        console.log(`Accounting service is connected to MongoDB`);
         app.emit("ready");
       })
       .catch((err) => {
-        console.log("Tasks service's connection to MongoDB is unsuccessful, retry after 2 seconds.", err);
+        console.log("Accounting service's connection to MongoDB is unsuccessful, retry after 2 seconds.", err);
         setTimeout(connectWithRetry, 2000);
       });
   };
@@ -26,7 +26,7 @@ exports.connect = (app) => {
 
 exports.connectKafka = (app) => {
   const kafka = new Kafka({
-    clientId: 'tasks',
+    clientId: 'Accounting',
     brokers: ['broker:9092'], // Use 'broker' as the hostname
     retry: {
       initialRetryTime: 1000, // Adjust the initial retry time if needed
@@ -34,14 +34,12 @@ exports.connectKafka = (app) => {
     },
   });
 
-  const producer = kafka.producer();
-  const consumer = kafka.consumer({ groupId: 'tasks-group' });
+  const consumer = kafka.consumer({ groupId: 'accounting-group' });
 
   const connectWithRetry = async () => {
     try {
-      await producer.connect();
       await consumer.connect();
-      console.log('Tasks service connected to Kafka');
+      console.log('Accounting service connected to Kafka');
     } catch (error) {
       console.error('Error connecting to Kafka:', error);
       console.log('Retrying in 2 seconds...');
@@ -51,5 +49,5 @@ exports.connectKafka = (app) => {
 
   connectWithRetry();
 
-  return { producer, consumer };
+  return { consumer };
 };

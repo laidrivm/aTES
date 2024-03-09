@@ -1,5 +1,6 @@
 const express = require("express");
 const Task = require("../db/task");
+const User = require("../db/user");
 const checkToken = require('../middlewares/checktoken');
 
 const taskScreen = `
@@ -48,6 +49,11 @@ const routes = (app, producer) => {
   router.get("/", async (req, res) => {
     const tasks = await Task.find({ assignee: req.user.user_id });
     res.json(tasks);
+  });
+
+  router.get("/users", async (req, res) => {
+    const users = await User.find({});
+    res.json(users);
   });
 
   router.get("/task", async (req, res) => {

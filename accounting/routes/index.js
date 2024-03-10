@@ -9,7 +9,14 @@ const routes = (app, producer) => {
 
   router.use(checkToken);
 
-  
+  router.get("/", async (req, res) => {
+    const user = await User.find({ user_id: req.user.user_id });
+    const transactions = await Transaction.find({ account_id: req.user.user_id });
+    res.json({
+      balance: user[0].balance,
+      transactions
+    });
+  });
 
   router.get("/users", async (req, res) => {
     const users = await User.find({});

@@ -49,8 +49,7 @@ const consume = (consumer) => {
 
           await User.findOneAndUpdate(
             { user_id: value.data.task_assignee },
-            { $inc: { balance: -value.data.assigned_price } },
-            { new: true }
+            { $inc: { balance: -value.data.assigned_price } }
           );
 
           break;

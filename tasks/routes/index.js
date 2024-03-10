@@ -40,7 +40,36 @@ const taskScreen = `
   <input type="text" id="description" name="description"><br>
   <input type="submit" value="Create">
 <\/form>
-`
+`;
+
+const shuffleScreen = `
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const shuffleButton = document.getElementById('shuffleButton');
+
+    shuffleButton.addEventListener('click', async () => {
+      try {
+        const response = await fetch("/shuffle", {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application\/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to shuffle tasks');
+        }
+
+        window.location.href = "\/";
+      } catch (error) {
+        console.error('Error during shuffling tasks:', error);
+      }
+    });
+  });
+<\/script>
+
+<button id="shuffleButton">Shuffle tasks<\/button>
+`;
 
 const routes = (app, producer) => {
   const router = express.Router();
@@ -105,6 +134,30 @@ const routes = (app, producer) => {
       res.redirect('/');
     } catch (error) {
       console.error("Error creating task:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  router.get("/shuffle", async (req, res) => {
+    res.send(shuffleScreen);
+  });
+
+  router.post("/shuffle", async (req, res) => {
+    try {
+      const tasks = await Task.find({ status: 'assigned' });
+      const doers = await User.find({ role: 'doer' });
+
+      const totalTasks = tasks.length;
+      const totalDoers = doers.length;
+      console.log(`Begin to shuffle ${totalTasks} tasks among ${totalDoers} assignees`)
+      for (let i = 0; i < totalTasks; i++) {
+        const randomIndex = Math.floor(Math.random() * totalDoers);
+        const randomDoer = doers[randomIndex];
+        console.log(`Reassign task ${tasks[i].description} to ${randomDoer.user_id}`);
+        await Task.findOneAndUpdate({ _id: tasks[i]._id }, { assignee: randomDoer.user_id });
+      }
+    } catch (error) {
+      console.error("Error shuffling tasks:", error);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });

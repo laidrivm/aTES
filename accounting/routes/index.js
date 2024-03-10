@@ -18,14 +18,20 @@ const routes = (app, producer) => {
     });
   });
 
-  router.get("/users", async (req, res) => {
-    const users = await User.find({});
-    res.json(users);
-  });
-
-  router.get("/tasks", async (req, res) => {
-    const tasks = await Task.find({});
-    res.json(tasks);
+  router.get("/admin", async (req, res) => {
+    const transactions = await Transaction.find({});
+    let earned = 0;
+    transactions.forEach(transaction => {
+      if (transaction.type === "debit") {
+        earned -= transaction.amount;
+      } else {
+        earned += transaction.amount;
+      }
+    });
+    res.json({
+      earned,
+      transactions
+    });
   });
 
   router.get("/transactions", async (req, res) => {

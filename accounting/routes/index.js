@@ -2,9 +2,14 @@ const express = require("express");
 const Task = require("../db/task");
 const User = require("../db/user");
 const Transaction = require("../db/transaction");
+const checkToken = require('../middlewares/checktoken');
 
 const routes = (app, producer) => {
   const router = express.Router();
+
+  router.use(checkToken);
+
+  
 
   router.get("/users", async (req, res) => {
     const users = await User.find({});

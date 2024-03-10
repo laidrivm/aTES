@@ -50,12 +50,12 @@ const routes = (app, producer) => {
               })
             };
 
-            if (validateSchema(event, 'user.created', 1)){
+            //if (validateSchema(event, 'user.created', 1)){
               await producer.send({
                 topic: 'user.cud',
                 messages: [event]
               });
-            }
+            //}
         }
 
         // Create a JWT token

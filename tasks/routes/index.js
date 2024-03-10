@@ -149,13 +149,36 @@ const routes = (app, producer) => {
 
       const totalTasks = tasks.length;
       const totalDoers = doers.length;
-      console.log(`Begin to shuffle ${totalTasks} tasks among ${totalDoers} assignees`)
+      const messages = [];
+
       for (let i = 0; i < totalTasks; i++) {
         const randomIndex = Math.floor(Math.random() * totalDoers);
         const randomDoer = doers[randomIndex];
-        console.log(`Reassign task ${tasks[i].description} to ${randomDoer.user_id}`);
-        await Task.findOneAndUpdate({ _id: tasks[i]._id }, { assignee: randomDoer.user_id });
+        const task = await Task.findOneAndUpdate({ _id: tasks[i]._id }, { assignee: randomDoer.user_id }, { new: true });
+
+        messages.push({
+          key: 'task.assigned',
+          value: JSON.stringify({
+            properties: {
+              event_id: '',
+              event_version: 1,
+              event_time: '',
+              producer: 'tasks'
+            },
+            data: {
+              task_id: task.external_id,
+              task_assignee: task.assignee
+            }
+          })
+        });
       }
+
+      await producer.send({
+        topic: 'task.cud',
+        messages
+      });
+
+      res.redirect('/');
     } catch (error) {
       console.error("Error shuffling tasks:", error);
       res.status(500).json({ error: "Internal Server Error" });

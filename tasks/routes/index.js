@@ -71,14 +71,73 @@ const shuffleScreen = `
 <button id="shuffleButton">Shuffle tasks<\/button>
 `;
 
+const tasksScreenScript = `
+<script>
+  async function closeTask(taskId, button) {
+    try {
+      const response = await fetch('\/close', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application\/json'
+        },
+        body: JSON.stringify({ taskId })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to close task');
+      }
+
+      button.style.display = 'none';
+    } catch (error) {
+      console.error('Error closing task:', error);
+    }
+  }
+<\/script>
+
+`;
+
 const routes = (app, producer) => {
   const router = express.Router();
 
   router.use(checkToken);
 
   router.get("/", async (req, res) => {
-    const tasks = await Task.find({ assignee: req.user.user_id });
-    res.json(tasks);
+    const tasks = await Task.find({ assignee: req.user.user_id, status: "assigned" });
+    let tasksScreen = tasksScreenScript;
+    tasks.forEach(task => {
+      tasksScreen += `<p>Description: ${task.description}, Assigned Price: ${task.assigned_price}, Completed Price: ${task.completed_price}<\/p>
+        <button onclick="closeTask('${task._id}', this)">Close<\/button>
+      `;
+    });
+    res.send(tasksScreen);
+  });
+
+  router.post("/close", async (req, res) => {
+    try {
+      const { taskId } = req.body;
+      const task = await Task.findOneAndUpdate({ _id: taskId }, { status: "closed" }, { new: true });
+      await producer.send({
+        topic: 'task.cud',
+        messages: [{
+          key: 'task.closed',
+          value: JSON.stringify({
+            properties: {
+              event_id: '',
+              event_version: 1,
+              event_time: '',
+              producer: 'tasks'
+            },
+            data: {
+              task_id: task.external_id
+            }
+          })
+        }]
+      });
+      res.redirect('/');
+    } catch (error) {
+      console.error("Error creating task:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
   });
 
   router.get("/users", async (req, res) => {

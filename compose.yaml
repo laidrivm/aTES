@@ -64,6 +64,16 @@ services:
       - 27019:27019
     command: mongod --port 27019
 
+  cron:
+    restart: always
+    build:
+      context: ./cron
+      dockerfile: Dockerfile
+    depends_on:
+      - broker
+    ports:
+      - 3004:3004
+
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     hostname: zookeeper

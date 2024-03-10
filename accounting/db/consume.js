@@ -5,7 +5,8 @@ const Transaction = require("../db/transaction");
 
 const consume = (consumer) => {
   consumer.subscribe({ topic: 'user.cud' });
-  consumer.subscribe({ topic: 'task.cud' })
+  consumer.subscribe({ topic: 'task.cud' });
+  consumer.subscribe({ topic: 'time.triggers' });
 
   consumer.run({
     eachMessage: async ({ topic, partition, message }) => {
@@ -94,6 +95,20 @@ const consume = (consumer) => {
           { user_id: task.assignee },
           { $inc: { balance: -task.assigned_price } }
         );
+      }
+
+      if (key==='day.ended') {
+        const users = await User.find({ balance: { $gt: 0 } });
+        users.forEach(async (user) => {
+          const transaction = new Transaction({
+            account_id: user.user_id,
+            type: 'payment',
+            amount: user.balance
+          });
+          await transaction.save();
+          user.balance = 0;
+          await user.save();
+        });
       }
     }
   });

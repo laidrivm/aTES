@@ -1,6 +1,8 @@
 const express = require("express");
 const Task = require("../db/task");
+const User = require("../db/user");
 const checkToken = require('../middlewares/checktoken');
+const crypto = require('node:crypto');
 
 const taskScreen = `
 <script>
@@ -38,16 +40,109 @@ const taskScreen = `
   <input type="text" id="description" name="description"><br>
   <input type="submit" value="Create">
 <\/form>
-`
+`;
 
-const routes = (app) => {
+const shuffleScreen = `
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const shuffleButton = document.getElementById('shuffleButton');
+
+    shuffleButton.addEventListener('click', async () => {
+      try {
+        const response = await fetch("/shuffle", {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application\/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to shuffle tasks');
+        }
+
+        window.location.href = "\/";
+      } catch (error) {
+        console.error('Error during shuffling tasks:', error);
+      }
+    });
+  });
+<\/script>
+
+<button id="shuffleButton">Shuffle tasks<\/button>
+`;
+
+const tasksScreenScript = `
+<script>
+  async function closeTask(taskId, button) {
+    try {
+      const response = await fetch('\/close', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application\/json'
+        },
+        body: JSON.stringify({ taskId })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to close task');
+      }
+
+      button.style.display = 'none';
+    } catch (error) {
+      console.error('Error closing task:', error);
+    }
+  }
+<\/script>
+
+`;
+
+const routes = (app, producer) => {
   const router = express.Router();
 
   router.use(checkToken);
 
   router.get("/", async (req, res) => {
-    const tasks = await Task.find({ assignee: req.user.user_id });
-    res.json(tasks);
+    const tasks = await Task.find({ assignee: req.user.user_id, status: "assigned" });
+    let tasksScreen = tasksScreenScript;
+    tasks.forEach(task => {
+      tasksScreen += `<p>Description: ${task.description}, Assigned Price: ${task.assigned_price}, Completed Price: ${task.completed_price}<\/p>
+        <button onclick="closeTask('${task._id}', this)">Close<\/button>
+      `;
+    });
+    res.send(tasksScreen);
+  });
+
+  router.post("/close", async (req, res) => {
+    try {
+      const { taskId } = req.body;
+      const task = await Task.findOneAndUpdate({ _id: taskId }, { status: "closed" }, { new: true });
+      await producer.send({
+        topic: 'task.cud',
+        messages: [{
+          key: 'task.closed',
+          value: JSON.stringify({
+            properties: {
+              event_id: '',
+              event_version: 1,
+              event_time: '',
+              producer: 'tasks'
+            },
+            data: {
+              task_id: task.external_id
+            }
+          })
+        }]
+      });
+      res.redirect('/');
+    } catch (error) {
+      console.error("Error creating task:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  router.get("/users", async (req, res) => {
+    const users = await User.find({});
+    res.json(users);
   });
 
   router.get("/task", async (req, res) => {
@@ -59,17 +154,92 @@ const routes = (app) => {
       const { description } = req.body;
       const assignedPrice = Math.floor(Math.random() * (20 - 10 + 1) + 10);
       const completedPrice = Math.floor(Math.random() * (40 - 20 + 1) + 20);
+      const users = await User.find({ role: 'doer' });
+      const randomIndex = Math.floor(Math.random() * users.length);
+      const randomAssignee = users[randomIndex];
+      const externalId = crypto.randomUUID();
       const task = new Task({
         description,
         status: "assigned",
-        assignee: req.user.user_id,
+        assignee: randomAssignee.user_id,
         assigned_price: assignedPrice,
-        completed_price: completedPrice
+        completed_price: completedPrice,
+        external_id: externalId
       });
       await task.save();
+
+      await producer.send({
+        topic: 'task.cud',
+        messages: [{
+          key: 'task.created',
+          value: JSON.stringify({
+            properties: {
+              event_id: '',
+              event_version: 1,
+              event_time: '',
+              producer: 'tasks'
+            },
+            data: {
+              task_description: task.description,
+              task_assignee: task.assignee,
+              assigned_price: task.assigned_price,
+              completed_price: task.completed_price,
+              task_id: task.external_id
+            }
+          })
+        }]
+      });
+
       res.redirect('/');
     } catch (error) {
       console.error("Error creating task:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+
+  router.get("/shuffle", async (req, res) => {
+    res.send(shuffleScreen);
+  });
+
+  router.post("/shuffle", async (req, res) => {
+    try {
+      const tasks = await Task.find({ status: 'assigned' });
+      const doers = await User.find({ role: 'doer' });
+
+      const totalTasks = tasks.length;
+      const totalDoers = doers.length;
+      const messages = [];
+
+      for (let i = 0; i < totalTasks; i++) {
+        const randomIndex = Math.floor(Math.random() * totalDoers);
+        const randomDoer = doers[randomIndex];
+        const task = await Task.findOneAndUpdate({ _id: tasks[i]._id }, { assignee: randomDoer.user_id }, { new: true });
+
+        messages.push({
+          key: 'task.assigned',
+          value: JSON.stringify({
+            properties: {
+              event_id: '',
+              event_version: 1,
+              event_time: '',
+              producer: 'tasks'
+            },
+            data: {
+              task_id: task.external_id,
+              task_assignee: task.assignee
+            }
+          })
+        });
+      }
+
+      await producer.send({
+        topic: 'task.cud',
+        messages
+      });
+
+      res.redirect('/');
+    } catch (error) {
+      console.error("Error shuffling tasks:", error);
       res.status(500).json({ error: "Internal Server Error" });
     }
   });

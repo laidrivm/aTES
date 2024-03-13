@@ -42,6 +42,38 @@ services:
       - 27018:27018
     command: mongod --port 27018
 
+  accounting:
+    restart: always
+    build:
+      context: ./accounting
+      dockerfile: Dockerfile
+    depends_on:
+      - mongo_accounting
+      - broker
+    ports:
+      - 3003:3003
+
+  mongo_accounting:
+    restart: always
+    image: mongo:4.2.0
+    volumes:
+      - ./mongo/accounting/data:/data/db
+    expose:
+      - 27019
+    ports:
+      - 27019:27019
+    command: mongod --port 27019
+
+  cron:
+    restart: always
+    build:
+      context: ./cron
+      dockerfile: Dockerfile
+    depends_on:
+      - broker
+    ports:
+      - 3004:3004
+
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     hostname: zookeeper

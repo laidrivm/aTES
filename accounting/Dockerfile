@@ -12,8 +12,8 @@ FROM node:${NODE_VERSION}-alpine
 
 # Use production node environment by default.
 ENV NODE_ENV development
-ENV PORT 3002
-ENV MONGODB_URI mongodb://mongo_tasks:27018/tasks
+ENV PORT 3003
+ENV MONGODB_URI mongodb://mongo_accounting:27019/accounting
 ENV AUTH_URI http://auth:3001
 ENV KAFKA_URI broker:9092
 
@@ -35,7 +35,7 @@ USER node
 COPY . .
 
 # Expose the port that the application listens on.
-EXPOSE 3002
+EXPOSE 3003
 
 # Run the application.
 CMD node index.js

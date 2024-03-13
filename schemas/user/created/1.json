@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "json schema for user creation event (version 1)",
+  "definitions": {
+    "event_data": {
+      "type": "object",
+      "properties": {
+        "user_id": { "type": "string" },
+        "user_role": { "type": "string" }
+      },
+      "required": ["user_id", "user_role"]
+    }
+  },
+  "type": "object",
+  "properties": {
+    "event_id": { "type": "string" },
+    "event_version": { "type": "integer" },
+    "event_name": { "type": "string", "enum": ["user.created"] },
+    "event_time": { "type": "string" },
+    "producer": { "type": "string" },
+    "data": { "$ref": "#/definitions/event_data" }
+  },
+  "required": [
+    "event_id",
+    "event_version",
+    "event_name",
+    "event_time",
+    "producer",
+    "data"
+  ]
+}

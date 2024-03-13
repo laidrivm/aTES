@@ -13,11 +13,11 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 db.connect(app);
-const { producer, consumer } = db.connectKafka(app);
+const { consumer } = db.connectKafka(app);
 
 const server_config = {};
 
-require("./routes")(app, producer);
+require("./routes")(app);
 require("./db/consume")(consumer);
 
 app.on("ready", () => {

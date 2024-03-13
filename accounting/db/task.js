@@ -6,7 +6,7 @@ const taskSchema = new mongoose.Schema({
   assignee: String,
   assigned_price: Number,
   completed_price: Number,
-  external_id: String
+  task_id: String
 });
 
 const Task = mongoose.model('Task', taskSchema);

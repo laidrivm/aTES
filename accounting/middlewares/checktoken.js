@@ -62,7 +62,6 @@ async function checkToken(req, res, next) {
             // If token is valid, set user object in request and proceed
             const userData = await response.json();
             req.user = userData;
-            //next(req, res);
             next();
         } else {
             // If token doesn't exist, respond with bare HTML form

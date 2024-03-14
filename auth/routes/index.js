@@ -3,6 +3,8 @@ const express = require("express");
 //const messages = require("../config/messages");
 const User = require("../db/user");
 const jwt = require('jsonwebtoken');
+const validateSchema = require('ates-schema-registry');
+const crypto = require('node:crypto');
 
 const routes = (app, producer) => {
   const router = express.Router();
@@ -14,7 +16,6 @@ const routes = (app, producer) => {
         
         res.json(users);
     } catch (error) {
-        // Handle errors
         console.error("Error retrieving tokens:", error);
         res.status(500).json({ error: "Internal Server Error" });
     }
@@ -34,28 +35,29 @@ const routes = (app, producer) => {
 
             await user.save();
 
-            const event = {
+            let event = {
               key: 'user.created',
-              value: JSON.stringify({
+              value: {
                 properties: {
-                  event_id: '',
+                  event_id: crypto.randomUUID(),
                   event_version: 1,
-                  event_time: '',
+                  event_time: new Date().toISOString(),
                   producer: 'auth'
                 },
                 data: {
                   user_id: user.user_id,
                   user_role: user.role
                 }
-              })
+              }
             };
 
-            //if (validateSchema(event, 'user.created', 1)){
+            if (validateSchema(event, 'user.created', 1)){
+              event.value = JSON.stringify(event.value);
               await producer.send({
                 topic: 'user.cud',
                 messages: [event]
               });
-            //}
+            }
         }
 
         // Create a JWT token

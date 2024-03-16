@@ -31,10 +31,35 @@ const consume = (consumer) => {
 
       }
 
-      if (key==='task.created'){
+      if (key==='task.created'&&(value.properties.event_version===1)){
         const task = new Task({
           task_id: value.data.task_id,
           description: value.data.task_description,
+          assignee: value.data.task_assignee,
+          assigned_price: value.data.assigned_price,
+          completed_price: value.data.completed_price
+        });
+        await task.save();
+
+        const transaction = new Transaction({
+          account_id: value.data.task_assignee,
+          task_id: value.data.task_id,
+          type: 'credit',
+          amount: value.data.assigned_price
+        });
+        await transaction.save();
+
+        await User.findOneAndUpdate(
+          { user_id: value.data.task_assignee },
+          { $inc: { balance: -value.data.assigned_price } }
+        );
+      }
+
+      if ((key==='task.created')&&(value.properties.event_version===2)){
+        const task = new Task({
+          task_id: value.data.task_id,
+          description: value.data.task_description,
+          jira_id: value.data.jira_id,
           assignee: value.data.task_assignee,
           assigned_price: value.data.assigned_price,
           completed_price: value.data.completed_price

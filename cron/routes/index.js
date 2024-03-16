@@ -1,4 +1,6 @@
 const express = require("express");
+const validateSchema = require('ates-schema-registry');
+const crypto = require('node:crypto');
 
 const mainScreen = `
 <script>
@@ -33,23 +35,29 @@ const routes = (app, producer) => {
 
   router.post("/endday", async (req, res) => {
     try {
-      await producer.send({
-        topic: 'time.triggers',
-        messages: [{
-          key: 'day.ended',
-          value: JSON.stringify({
-            properties: {
-              event_id: '',
-              event_version: 1,
-              event_time: new Date(),
-              producer: 'cron'
-            },
-            data: {
-              manually: true
-            }
-          })
-        }]
-      });
+      let event = {
+        key: 'day.ended',
+        value: {
+          properties: {
+            event_id: crypto.randomUUID(),
+            event_version: 1,
+            event_time: new Date().toISOString(),
+            producer: 'cron'
+          },
+          data: {
+            manually: true
+          }
+        }
+      };
+
+      if (validateSchema(event)){
+        event.value = JSON.stringify(event.value);
+        await producer.send({
+          topic: 'time.triggers',
+          messages: [event]
+        });
+      }
+
       res.redirect('/');
     } catch (error) {
       console.error("Error creating task:", error);

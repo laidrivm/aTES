@@ -55,6 +55,32 @@ const consume = (consumer) => {
           { $inc: { balance: -value.data.assigned_price } }
         );
       }
+
+      if (key==='task.updated'){
+        //possible way to reassign task without charging assigned price
+        await User.findOneAndUpdate(
+          { task_id: value.data.task_id },
+          {
+            description: value.data.task_description,
+            jira_id: value.data.jira_id,
+            assignee: value.data.task_assignee,
+          }
+        );
+
+        if (value.data.assigned_price) {
+          await User.findOneAndUpdate(
+            { task_id: value.data.task_id },
+            { assigned_price: value.data.assigned_price }
+          );
+        }
+
+        if (value.data.completed_price) {
+          await User.findOneAndUpdate(
+            { task_id: value.data.task_id },
+            { completed_price: value.data.completed_price }
+          );
+        }
+      }
           
       if (key==='task.closed') {
         const task = await Task.findOneAndUpdate(

@@ -16,3 +16,5 @@ Algorithm for migrating to the new event schema, introducing Jira_id:
 1. Ensure there are no tasc.created.v1 events left in the message broker.
 1. Remove the tasks.created.v1 consumer in accounting.
 1. Release accounting service.
+1. Add task.update event producer in tasks service and consumer in accounting service.
+1. Fill in jira_id in all the tasks without it and send a batch of taks.updated events.

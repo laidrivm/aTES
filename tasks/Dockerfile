@@ -16,7 +16,7 @@ ENV PORT 3002
 ENV MONGODB_URI mongodb://mongo_tasks:27018/tasks
 ENV AUTH_URI http://auth:3001
 ENV KAFKA_URI broker:9092
-ENV TASKEVENTV2 false
+ENV TASKEVENTV2 true
 
 WORKDIR /usr/src/app
 

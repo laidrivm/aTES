@@ -115,7 +115,7 @@ const routes = (app, producer) => {
     const tasks = await Task.find({ assignee: req.user.user_id, status: "assigned" });
     let tasksScreen = tasksScreenScript;
     tasks.forEach(task => {
-      tasksScreen += `<p>Description: ${task.description}, Assigned Price: ${task.assigned_price}, Completed Price: ${task.completed_price}<\/p>
+      tasksScreen += `<p>Jira_id: ${task.jira_id}, Description: ${task.description}, Assigned Price: ${task.assigned_price}, Completed Price: ${task.completed_price}<\/p>
         <button onclick="closeTask('${task._id}', this)">Close<\/button>
       `;
     });
@@ -195,7 +195,9 @@ const routes = (app, producer) => {
       });
       await task.save();
 
-      let event = {
+      let event = {}
+
+      event = {
         key: 'task.created',
         value: {
           properties: {
@@ -215,8 +217,25 @@ const routes = (app, producer) => {
       };
 
       if (process.env.TASKEVENTV2 === 'true') {
-        event.value.properties.event_version = 2;
-        event.data.jira_id = task.jira_id;
+        event = {
+          key: 'task.created',
+          value: {
+            properties: {
+              event_id: crypto.randomUUID(),
+              event_version: 2,
+              event_time: new Date().toISOString(),
+              producer: 'tasks'
+            },
+            data: {
+              task_description: task.description,
+              jira_id: task.jira_id,
+              task_assignee: task.assignee,
+              assigned_price: task.assigned_price,
+              completed_price: task.completed_price,
+              task_id: task.external_id
+            }
+          }
+        };
       }
 
       if (validateSchema(event)){

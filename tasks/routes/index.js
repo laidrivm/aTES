@@ -117,23 +117,30 @@ const routes = (app, producer) => {
     try {
       const { taskId } = req.body;
       const task = await Task.findOneAndUpdate({ _id: taskId }, { status: "closed" }, { new: true });
-      await producer.send({
-        topic: 'task.cud',
-        messages: [{
-          key: 'task.closed',
-          value: JSON.stringify({
-            properties: {
-              event_id: '',
-              event_version: 1,
-              event_time: '',
-              producer: 'tasks'
-            },
-            data: {
-              task_id: task.external_id
-            }
-          })
-        }]
-      });
+
+      let event = {
+        key: 'task.closed',
+        value: {
+          properties: {
+            event_id: crypto.randomUUID(),
+            event_version: 1,
+            event_time: new Date().toISOString(),
+            producer: 'tasks'
+          },
+          data: {
+            task_id: task.external_id
+          }
+        }
+      };
+
+      if (validateSchema(event)){
+        event.value = JSON.stringify(event.value);
+        await producer.send({
+          topic: 'task.cud',
+          messages: [event]
+        });
+      }
+
       res.redirect('/');
     } catch (error) {
       console.error("Error creating task:", error);

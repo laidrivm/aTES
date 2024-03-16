@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require("express");
 const Task = require("../db/task");
 const User = require("../db/user");
@@ -21,7 +22,7 @@ const taskScreen = `
           headers: {
             'Content-Type': 'application\/json'
           },
-          body: JSON.stringify({ description })
+          body: JSON.stringify({ jira_id, description })
         });
 
         if (!response.ok) {
@@ -37,6 +38,8 @@ const taskScreen = `
 <\/script>
 
 <form id="taskForm">
+  <label for="jira_id">Jira_id:<\/label>
+  <input type="text" id="jira_id" name="jira_id"><br>
   <label for="description">Task description:<\/label>
   <input type="text" id="description" name="description"><br>
   <input type="submit" value="Create">
@@ -96,6 +99,11 @@ const tasksScreenScript = `
 <\/script>
 
 `;
+
+function hasJiraId(description) {
+  const regex = /\[\]/;
+  return regex.test(description);
+}
 
 const routes = (app, producer) => {
   const router = express.Router();
@@ -159,7 +167,12 @@ const routes = (app, producer) => {
 
   router.post("/task", async (req, res) => {
     try {
-      const { description } = req.body;
+      const { jira_id, description } = req.body;
+
+      if (hasJiraId(description)) {
+        res.status(400).json({ error: "Jira_id in description" });
+      }
+
       const assignedPrice = Math.floor(Math.random() * (20 - 10 + 1) + 10);
       const completedPrice = Math.floor(Math.random() * (40 - 20 + 1) + 20);
       const users = await User.find({ role: 'doer' });
@@ -168,6 +181,7 @@ const routes = (app, producer) => {
       const externalId = crypto.randomUUID();
       const task = new Task({
         description,
+        jira_id,
         status: "assigned",
         assignee: randomAssignee.user_id,
         assigned_price: assignedPrice,
@@ -194,6 +208,11 @@ const routes = (app, producer) => {
           }
         }
       };
+
+      if (process.env.TASKEVENTV2) {
+        event.value.properties.event_version = 2;
+        event.data.jira_id: task.jira_id;
+      }
 
       if (validateSchema(event)){
         event.value = JSON.stringify(event.value);

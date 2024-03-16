@@ -51,7 +51,7 @@ const routes = (app, producer) => {
               }
             };
 
-            if (validateSchema(event, 'user.created', 1)){
+            if (validateSchema(event)){
               event.value = JSON.stringify(event.value);
               await producer.send({
                 topic: 'user.cud',

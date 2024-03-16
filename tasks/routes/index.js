@@ -2,6 +2,7 @@ const express = require("express");
 const Task = require("../db/task");
 const User = require("../db/user");
 const checkToken = require('../middlewares/checktoken');
+const validateSchema = require('ates-schema-registry');
 const crypto = require('node:crypto');
 
 const taskScreen = `
@@ -168,27 +169,32 @@ const routes = (app, producer) => {
       });
       await task.save();
 
-      await producer.send({
-        topic: 'task.cud',
-        messages: [{
-          key: 'task.created',
-          value: JSON.stringify({
-            properties: {
-              event_id: '',
-              event_version: 1,
-              event_time: '',
-              producer: 'tasks'
-            },
-            data: {
-              task_description: task.description,
-              task_assignee: task.assignee,
-              assigned_price: task.assigned_price,
-              completed_price: task.completed_price,
-              task_id: task.external_id
-            }
-          })
-        }]
-      });
+      let event = {
+        key: 'task.created',
+        value: {
+          properties: {
+            event_id: crypto.randomUUID(),
+            event_version: 1,
+            event_time: new Date().toISOString(),
+            producer: 'tasks'
+          },
+          data: {
+            task_description: task.description,
+            task_assignee: task.assignee,
+            assigned_price: task.assigned_price,
+            completed_price: task.completed_price,
+            task_id: task.external_id
+          }
+        }
+      };
+
+      if (validateSchema(event)){
+        event.value = JSON.stringify(event.value);
+        await producer.send({
+          topic: 'task.cud',
+          messages: [event]
+        });
+      }
 
       res.redirect('/');
     } catch (error) {

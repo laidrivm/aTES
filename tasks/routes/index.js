@@ -15,6 +15,7 @@ const taskScreen = `
       event.preventDefault();
 
       const description = document.getElementById('description').value;
+      const jira_id = document.getElementById('jira_id').value;
 
       try {
         const response = await fetch("/task", {
@@ -101,7 +102,7 @@ const tasksScreenScript = `
 `;
 
 function hasJiraId(description) {
-  const regex = /\[\]/;
+  const regex = /\[.*\]/;
   return regex.test(description);
 }
 
@@ -169,8 +170,12 @@ const routes = (app, producer) => {
     try {
       const { jira_id, description } = req.body;
 
+      console.log(req.body);
+      console.log(jira_id);
+      console.log(description);
+
       if (hasJiraId(description)) {
-        res.status(400).json({ error: "Jira_id in description" });
+        return res.status(400).json({ error: "Jira_id in description" });
       }
 
       const assignedPrice = Math.floor(Math.random() * (20 - 10 + 1) + 10);
@@ -209,7 +214,7 @@ const routes = (app, producer) => {
         }
       };
 
-      if (process.env.TASKEVENTV2) {
+      if (process.env.TASKEVENTV2 === 'true') {
         event.value.properties.event_version = 2;
         event.data.jira_id = task.jira_id;
       }

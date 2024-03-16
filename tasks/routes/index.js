@@ -195,19 +195,18 @@ const routes = (app, producer) => {
       });
       await task.save();
 
-      let event = {}
-
-      event = {
+      let event = {
         key: 'task.created',
         value: {
           properties: {
             event_id: crypto.randomUUID(),
-            event_version: 1,
+            event_version: 2,
             event_time: new Date().toISOString(),
             producer: 'tasks'
           },
           data: {
             task_description: task.description,
+            jira_id: task.jira_id,
             task_assignee: task.assignee,
             assigned_price: task.assigned_price,
             completed_price: task.completed_price,
@@ -215,28 +214,6 @@ const routes = (app, producer) => {
           }
         }
       };
-
-      if (process.env.TASKEVENTV2 === 'true') {
-        event = {
-          key: 'task.created',
-          value: {
-            properties: {
-              event_id: crypto.randomUUID(),
-              event_version: 2,
-              event_time: new Date().toISOString(),
-              producer: 'tasks'
-            },
-            data: {
-              task_description: task.description,
-              jira_id: task.jira_id,
-              task_assignee: task.assignee,
-              assigned_price: task.assigned_price,
-              completed_price: task.completed_price,
-              task_id: task.external_id
-            }
-          }
-        };
-      }
 
       if (validateSchema(event)){
         event.value = JSON.stringify(event.value);

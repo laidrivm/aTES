@@ -221,21 +221,26 @@ const routes = (app, producer) => {
         const randomDoer = doers[randomIndex];
         const task = await Task.findOneAndUpdate({ _id: tasks[i]._id }, { assignee: randomDoer.user_id }, { new: true });
 
-        messages.push({
-          key: 'task.assigned',
-          value: JSON.stringify({
+        let event = {
+        key: 'task.assigned',
+          value: {
             properties: {
-              event_id: '',
+              event_id: crypto.randomUUID(),
               event_version: 1,
-              event_time: '',
+              event_time: new Date().toISOString(),
               producer: 'tasks'
             },
             data: {
-              task_id: task.external_id,
-              task_assignee: task.assignee
+              task_assignee: task.assignee,
+              task_id: task.external_id
             }
-          })
-        });
+          }
+        };
+
+        if (validateSchema(event)){
+          event.value = JSON.stringify(event.value);
+          messages.push(event);
+        }
       }
 
       await producer.send({

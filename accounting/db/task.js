@@ -7,7 +7,8 @@ const taskSchema = new mongoose.Schema({
   assignee: String,
   assigned_price: Number,
   completed_price: Number,
-  task_id: String
+  task_id: String,
+  created_at: Date
 });
 
 const Task = mongoose.model('Task', taskSchema);

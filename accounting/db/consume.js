@@ -38,7 +38,8 @@ const consume = (consumer) => {
           jira_id: value.data.jira_id,
           assignee: value.data.task_assignee,
           assigned_price: value.data.assigned_price,
-          completed_price: value.data.completed_price
+          completed_price: value.data.completed_price,
+          created_at: value.properties.event_time
         });
         await task.save();
 

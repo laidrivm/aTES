@@ -19,6 +19,8 @@ const routes = (app, producer) => {
   });
 
   router.get("/admin", async (req, res) => {
+    const usersWithNegativeBalance = await User.find({ balance: { $lt: 0 } });
+
     const transactions = await Transaction.find({});
     let earned = 0;
     transactions.forEach(transaction => {
@@ -28,10 +30,51 @@ const routes = (app, producer) => {
         earned += transaction.amount;
       }
     });
+
     res.json({
       earned,
+      popugsInDebt: usersWithNegativeBalance.length,
       transactions
     });
+  });
+
+  router.get("/tasks", async (req, res) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const monthAgo = new Date(today);
+    monthAgo.setDate(today.getDate() - 30);
+
+    const weekAgo = new Date(today);
+    monthAgo.setDate(today.getDate() - 7);
+
+    const resultToday = await Task.aggregate([
+      { $match: { created_at: { $gte: today } } },
+      { $group: { _id: null, maxCompletedPrice: { $max: "$completed_price" } } }
+    ]);
+
+    const resultWeek = await Task.aggregate([
+    { $match: { created_at: { $gte: weekAgo } } },
+      { $group: { _id: null, maxCompletedPrice: { $max: "$completed_price" } } }
+    ]);
+
+    const resultMonth = await Task.aggregate([
+      { $match: { created_at: { $gte: monthAgo } } },
+      { $group: { _id: null, maxCompletedPrice: { $max: "$completed_price" } } }
+    ]);
+
+    const statsMonth = await Task.aggregate([
+      { $match: { created_at: { $gte: monthAgo } } },
+      { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$created_at' } }, maxCompletedPrice: { $max: "$completed_price" } } },
+      { $sort: { '_id': 1 } }
+    ]);
+
+    console.log("Today's max completed price:", resultToday[0]?.maxCompletedPrice);
+    console.log("Last 7 days max completed price:", resultWeek[0]?.maxCompletedPrice);
+    console.log("Month max completed price:", resultMonth[0]?.maxCompletedPrice);
+    console.log("Stats for each day during the month:", statsMonth);
+
+    res.json({ resultToday, resultWeek, resultMonth, statsMonth });
   });
 
   router.get("/transactions", async (req, res) => {

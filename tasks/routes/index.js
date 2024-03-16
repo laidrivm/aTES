@@ -211,7 +211,7 @@ const routes = (app, producer) => {
 
       if (process.env.TASKEVENTV2) {
         event.value.properties.event_version = 2;
-        event.data.jira_id: task.jira_id;
+        event.data.jira_id = task.jira_id;
       }
 
       if (validateSchema(event)){

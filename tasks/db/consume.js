@@ -24,8 +24,7 @@ const consume = (consumer) => {
         }
       } else {
         const invalidEvent = new InvalidEvent({
-          key,
-          value,
+          message,
           created_at: new Date().toISOString()
         });
       }

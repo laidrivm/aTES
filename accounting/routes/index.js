@@ -69,11 +69,6 @@ const routes = (app, producer) => {
       { $sort: { '_id': 1 } }
     ]);
 
-    console.log("Today's max completed price:", resultToday[0]?.maxCompletedPrice);
-    console.log("Last 7 days max completed price:", resultWeek[0]?.maxCompletedPrice);
-    console.log("Month max completed price:", resultMonth[0]?.maxCompletedPrice);
-    console.log("Stats for each day during the month:", statsMonth);
-
     res.json({ resultToday, resultWeek, resultMonth, statsMonth });
   });
 

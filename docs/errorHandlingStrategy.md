@@ -11,7 +11,7 @@ The desired strategy to handle errors regarding accounting.
 
 ### If accounting received an invalid event
 
-- [ ]  Begin to validate schema and event version in consumers.
+- [X]  Begin to validate schema and event version in consumers.
 - [ ]  Store events in local database, if they do not pass the validation.
 - [ ]  Send an alert to admin's email or messanger when we save error causing event to the database.
 

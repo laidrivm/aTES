@@ -1,8 +1,9 @@
 const express = require("express");
 const User = require("../db/user");
+const InvalidEvent = require('../db/invalidEvent');
+const validateSchema = require('ates-schema-registry');
 
 const consume = (consumer) => {
-  // Subscribe to topics, run consumers, etc.
   consumer.subscribe({ topic: 'user.cud' });
 
   consumer.run({
@@ -13,12 +14,19 @@ const consume = (consumer) => {
        });
       const key = message.key.toString();
       const value = JSON.parse(message.value.toString());
-      if (key === 'user.created') {
-	    const user = new User({
-	      user_id: value.data.user_id,
-	      role: value.data.user_role
-	    });
-	    await user.save();
+      if (validateSchema({key, value})) {
+        if ((key === 'user.created')&&(value.properties.event_version === 1)) {
+          const user = new User({
+            user_id: value.data.user_id,
+            role: value.data.user_role
+          });
+          await user.save();
+        }
+      } else {
+        const invalidEvent = new InvalidEvent({
+          message,
+          created_at: new Date().toISOString()
+        });
       }
     }
   });
